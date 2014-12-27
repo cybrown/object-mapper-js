@@ -4,12 +4,15 @@
   "description": "plain object to object with prototype mapper",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "mocha",
     "build": "npm run typescript && npm run browserify && npm run uglify",
     "typescript": "tsc meta.ts --module commonjs --noImplicitAny",
     "browserify": "browserify index.js > object-mapper-browser.js",
     "clean": "rimraf meta.js && rimraf object-mapper-browser.js",
-    "uglify": "uglify -s object-mapper-browser.js -o object-mapper-browser.min.js"
+    "uglify": "uglify -s object-mapper-browser.js -o object-mapper-browser.min.js",
+
+    "prebuild": "npm run clean",
+    "pretest": "npm run build"
   },
   "repository": {
     "type": "git",
@@ -23,6 +26,7 @@
   "homepage": "https://github.com/cybrown/object-mapper-js",
   "devDependencies": {
     "browserify": "^8.0.2",
+    "mocha": "^2.1.0",
     "rimraf": "^2.2.8",
     "typescript": "^1.3.0",
     "uglify": "^0.1.1"
