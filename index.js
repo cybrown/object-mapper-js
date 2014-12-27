@@ -32,22 +32,18 @@ var $plainObject = new meta.Identifier('plainObject');
 var _createTransformWithConverter = function (destination, source, constructedFunctionContext, converter) {
     constructedFunctionContext.push(converter);
     var node = $ctx.member(new meta.LiteralNumber(constructedFunctionContext.length - 1)).call(source);
-    return new meta.ExpressionStatement(destination.assign(node));
+    return destination.assign(node).toStatement();
 };
 
 var _createTransformWithNewKey = function (destination, source) {
-    return new meta.ExpressionStatement(destination.assign(source));
+    return destination.assign(source).toStatement();
 };
 
 var _createTransformWithType = function (destination, source, constructedFunctionContext, type, getConverterFunctionForPrototype) {
     constructedFunctionContext.push(type);
-    var nodes = [
-        new meta.ExpressionStatement(
-            destination.binary('||', destination.assign(new meta.NewExpression(
-                $ctx.member(new meta.LiteralNumber(constructedFunctionContext.length - 1))
-            )).parenthesis())
-        )
-    ];
+    var nodes = [destination.binary('||', destination.assign(new meta.NewExpression(
+        $ctx.member(new meta.LiteralNumber(constructedFunctionContext.length - 1))
+    )).parenthesis()).toStatement()];
     nodes = nodes.concat(_createConverterSourceCode(
         getConverterFunctionForPrototype(type).config,
         constructedFunctionContext,

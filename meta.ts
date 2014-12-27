@@ -22,6 +22,10 @@ export class ExpressionNode extends BaseNode {
         return new ParenthesisExpression(this);
     }
 
+    toStatement (): ExpressionStatement {
+        return new ExpressionStatement(this);
+    }
+
     assign (right: ExpressionNode): AssignmentExpression;
     assign (operator: AssignmentOperator, right: ExpressionNode): AssignmentExpression;
     assign (operatorOrRight: any, right?: ExpressionNode) {
