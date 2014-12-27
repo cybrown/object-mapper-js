@@ -1,5 +1,7 @@
 'use strict';
 
+var meta = require('./meta');
+
 var mapperId = 0;
 
 var _iterateConfigurationAttributes = function (configuration, onAttribute) {
@@ -23,25 +25,51 @@ var _iterateConfigurationAttributes = function (configuration, onAttribute) {
 };
 
 var _createConverterFunctionFromConfigurationWithEval = function (configuration, map) {
-    var constructedFunction = '(function (ctx) {\n  return function (dest, plainObject) {\n';
     var constructedFunctionContext = [];
+    var $dest = new meta.Identifier('dest');
+    var $ctx = new meta.Identifier('ctx');
+    var $map = new meta.Identifier('map');
+    var $plainObject = new meta.Identifier('plainObject');
+    var statements = [];
     _iterateConfigurationAttributes(configuration, function (destinationPropertyKey, sourcePropertyKey, type, converter) {
+        var $destinationPropertyKey = new meta.Identifier(destinationPropertyKey);
+        var $sourcePropertyKey = new meta.Identifier(sourcePropertyKey);
         if (type) {
             constructedFunctionContext.push(type);
-            constructedFunction += 'dest.' + destinationPropertyKey + ' = ' + 'map(plainObject.' +
-                sourcePropertyKey + ', ctx[' + (constructedFunctionContext.length - 1) + '], dest.' + destinationPropertyKey + ');\n';
+            var node = new meta.AssignmentExpression(
+                meta.AssignmentOperator.EQ,
+                new meta.MemberExpression($dest, $destinationPropertyKey),
+                new meta.CallExpression(
+                    $map,
+                    [
+                        new meta.MemberExpression($plainObject, $sourcePropertyKey),
+                        new meta.MemberExpression($ctx, new meta.LiteralNumber(constructedFunctionContext.length - 1)),
+                        new meta.MemberExpression($dest, $destinationPropertyKey)
+                    ]
+                )
+            );
         } else if (converter) {
             constructedFunctionContext.push(converter);
-            constructedFunction += 'dest.' + destinationPropertyKey + ' = ctx[' +
-                (constructedFunctionContext.length - 1) + '](plainObject.' + sourcePropertyKey + ');\n';
+            var node = new meta.AssignmentExpression(
+                meta.AssignmentOperator.EQ,
+                new meta.MemberExpression($dest, $destinationPropertyKey),
+                new meta.CallExpression(
+                    new meta.MemberExpression($ctx, new meta.LiteralNumber(constructedFunctionContext.length - 1)),
+                    [new meta.MemberExpression($plainObject, $sourcePropertyKey)]
+                )
+            );
         } else {
-            constructedFunction += 'dest.' + destinationPropertyKey + ' = ' +
-                'plainObject.' + sourcePropertyKey + ';\n';
+            var node = new meta.AssignmentExpression(
+                meta.AssignmentOperator.EQ,
+                new meta.MemberExpression($dest, $destinationPropertyKey),
+                new meta.MemberExpression($plainObject, $sourcePropertyKey)
+            );
         }
+        statements.push(new meta.ExpressionStatement(node));
     });
-    constructedFunction += 'return dest;\n';
-    constructedFunction += '};\n})';
-    return eval(constructedFunction)(constructedFunctionContext);
+    statements.push(new meta.ReturnStatement($dest));
+    var func = new meta.Function(null, [$dest, $plainObject], new meta.BlockStatement(statements));
+    return eval('(function (ctx) {\nreturn ' + func.output() + '})')(constructedFunctionContext);
 };
 
 var _createConverterFunctionFromConfiguration = function (configuration, map) {
