@@ -2,21 +2,20 @@
 
 var mapperId = 0;
 
-var _createConverterFunctionFromConfiguration = function (configuration, map) {
-    var arrayOfConverterFunctions = [];
-    Object.keys(configuration.attributes).forEach(function (key) {
-        var attributeConf = configuration.attributes[key];
+var _iterateConfigurationAttributes = function (configuration, onAttribute) {
+    Object.keys(configuration.attributes).forEach(function (destinationPropertyKey) {
+        var attributeConf = configuration.attributes[destinationPropertyKey];
         // check if property exists from source
         var converter = null;
         var type = null;
-        var name = key;
+        var sourcePropertyKey = destinationPropertyKey;
         if (typeof attributeConf === 'boolean') {
             // warning on default behaviour
             if (!attributeConf) {
                 return;
             }
         } else if (typeof attributeConf === 'string') {
-            name = attributeConf;
+            sourcePropertyKey = attributeConf;
         } else if (typeof attributeConf === 'function') {
             if (attributeConf.hasOwnProperty('prototype')) {
                 type = attributeConf;
@@ -24,25 +23,53 @@ var _createConverterFunctionFromConfiguration = function (configuration, map) {
                 converter = attributeConf;
             }
         } else if (typeof attributeConf === 'object') {
-            var name = attributeConf.name || key;
+            var sourcePropertyKey = attributeConf.name || destinationPropertyKey;
             var type = attributeConf.type || null;
             var converter = attributeConf.converter || null;
             // warning if type AND converter are defined
         } else {
-            throw new Error('Unknown type for attribute "' + key + '"" with type "' + typeof attributeConf + '"');
+            throw new Error('Unknown type for attribute "' + destinationPropertyKey + '"" with type "' + typeof attributeConf + '"');
         }
+        onAttribute(destinationPropertyKey, sourcePropertyKey, type, converter);
+    });
+};
 
+var _createConverterFunctionFromConfigurationWithEval = function (configuration, map) {
+    var constructedFunction = '(function (ctx) {\n  return function (dest, plainObject) {\n';
+    var constructedFunctionContext = [];
+    _iterateConfigurationAttributes(configuration, function (destinationPropertyKey, sourcePropertyKey, type, converter) {
+        if (type) {
+            constructedFunctionContext.push(type);
+            constructedFunction += 'dest.' + destinationPropertyKey + ' = ' + 'map(plainObject.' +
+                sourcePropertyKey + ', ctx[' + (constructedFunctionContext.length - 1) + '], dest.' + destinationPropertyKey + ');\n';
+        } else if (converter) {
+            constructedFunctionContext.push(converter);
+            constructedFunction += 'dest.' + destinationPropertyKey + ' = ctx[' +
+                (constructedFunctionContext.length - 1) + '](plainObject.' + sourcePropertyKey + ');\n';
+        } else {
+            constructedFunction += 'dest.' + destinationPropertyKey + ' = ' +
+                'plainObject.' + sourcePropertyKey + ';\n';
+        }
+    });
+    constructedFunction += 'return dest;\n';
+    constructedFunction += '};\n})';
+    return eval(constructedFunction)(constructedFunctionContext);
+};
+
+var _createConverterFunctionFromConfiguration = function (configuration, map) {
+    var arrayOfConverterFunctions = [];
+    _iterateConfigurationAttributes(configuration, function (destinationPropertyKey, sourcePropertyKey, type, converter) {
         if (type) {
             arrayOfConverterFunctions.push(function convertWithPrototype (dest, plainObject) {
-                dest[key] = map(plainObject[name], type, dest[key]);
+                dest[destinationPropertyKey] = map(plainObject[sourcePropertyKey], type, dest[destinationPropertyKey]);
             });
         } else if (converter) {
             arrayOfConverterFunctions.push(function convertWithConverter (dest, plainObject) {
-                dest[key] = converter(plainObject[name]);
+                dest[destinationPropertyKey] = converter(plainObject[sourcePropertyKey]);
             });
         } else {
             arrayOfConverterFunctions.push(function convertWithName (dest, plainObject) {
-                dest[key] = plainObject[name];
+                dest[destinationPropertyKey] = plainObject[sourcePropertyKey];
             });
         }
     });
@@ -76,6 +103,10 @@ ObjectMapper.prototype.map = function (sourceObject, prototype, instance) {
 
 ObjectMapper.prototype.setMappingConfiguration = function (prototype, configuration) {
     prototype[this._converterFunctionNameOnPrototype] = _createConverterFunctionFromConfiguration(configuration, this._boundMap);
+};
+
+ObjectMapper.prototype.setMappingConfigurationWithEval = function (prototype, configuration) {
+    prototype[this._converterFunctionNameOnPrototype] = _createConverterFunctionFromConfigurationWithEval(configuration, this._boundMap);
 };
 
 if (typeof module === 'object') {

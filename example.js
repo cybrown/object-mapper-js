@@ -96,3 +96,36 @@ for (var i = 0; i < 100000; i++) {
 }
 var b = Date.now();
 console.log(b - a + 'ms');
+
+fromPlainObjectMapper.setMappingConfigurationWithEval(Person, {
+    attributes: {
+        firstname: true,
+        lastname: {name: 'last_name'},
+        age: {name: 'Age', converter: Number},
+        address: {name: 'Address', type: Address}
+    }
+});
+
+fromPlainObjectMapper.setMappingConfigurationWithEval(Address, {
+    attributes: {
+        street: 'Street',
+        zipCode: 'Zip',
+        city: 'Town'
+    }
+});
+
+console.log('');
+
+var a = Date.now();
+for (var i = 0; i < 100000; i++) {
+    fromPlainObjectMapper.map(totoDto, Person);
+}
+var b = Date.now();
+console.log(b - a + 'ms');
+
+var a = Date.now();
+for (var i = 0; i < 100000; i++) {
+    fromPlainObjectMapper.map(totoDto, Person, new Person());
+}
+var b = Date.now();
+console.log(b - a + 'ms');
