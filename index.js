@@ -87,31 +87,6 @@ var _createConverterFunctionFromConfigurationWithEval = function (configuration,
     return converter;
 };
 
-var _createConverterFunctionFromConfiguration = function (configuration, map) {
-    var arrayOfConverterFunctions = [];
-    _iterateConfigurationAttributes(configuration, function (destinationPropertyKey, sourcePropertyKey, type, converter) {
-        if (type) {
-            arrayOfConverterFunctions.push(function convertWithPrototype (dest, plainObject) {
-                dest[destinationPropertyKey] = map(plainObject[sourcePropertyKey], type, dest[destinationPropertyKey]);
-            });
-        } else if (converter) {
-            arrayOfConverterFunctions.push(function convertWithConverter (dest, plainObject) {
-                dest[destinationPropertyKey] = converter(plainObject[sourcePropertyKey]);
-            });
-        } else {
-            arrayOfConverterFunctions.push(function convertWithName (dest, plainObject) {
-                dest[destinationPropertyKey] = plainObject[sourcePropertyKey];
-            });
-        }
-    });
-    return function callListOfConvertors (dest, plainObject) {
-        for (var i = 0, length = arrayOfConverterFunctions.length; i < length; ++i) {
-            arrayOfConverterFunctions[i](dest, plainObject);
-        }
-        return dest;
-    };
-};
-
 var bind = function (func, ctx) {
     return function () {
         return func.apply(ctx, arguments);
@@ -134,10 +109,6 @@ ObjectMapper.prototype.map = function (sourceObject, prototype, instance) {
 };
 
 ObjectMapper.prototype.setMappingConfiguration = function (prototype, configuration) {
-    prototype[this._converterFunctionNameOnPrototype] = _createConverterFunctionFromConfiguration(configuration, this._boundMap);
-};
-
-ObjectMapper.prototype.setMappingConfigurationWithEval = function (prototype, configuration) {
     prototype[this._converterFunctionNameOnPrototype] = _createConverterFunctionFromConfigurationWithEval(configuration, this._boundMap, this._boundGetConverterFunctionForPrototype);
 };
 
