@@ -36,36 +36,18 @@ var _createConverterFunctionFromConfigurationWithEval = function (configuration,
         var $sourcePropertyKey = new meta.Identifier(sourcePropertyKey);
         if (type) {
             constructedFunctionContext.push(type);
-            var node = new meta.AssignmentExpression(
-                meta.AssignmentOperator.EQ,
-                new meta.MemberExpression($dest, $destinationPropertyKey),
-                new meta.CallExpression(
-                    $map,
-                    [
-                        new meta.MemberExpression($plainObject, $sourcePropertyKey),
-                        new meta.MemberExpression($ctx, new meta.LiteralNumber(constructedFunctionContext.length - 1)),
-                        new meta.MemberExpression($dest, $destinationPropertyKey)
-                    ]
-                )
+            var node = $map.call(
+                $plainObject.member($sourcePropertyKey),
+                $ctx.member(new meta.LiteralNumber(constructedFunctionContext.length - 1)),
+                $dest.member($destinationPropertyKey)
             );
         } else if (converter) {
             constructedFunctionContext.push(converter);
-            var node = new meta.AssignmentExpression(
-                meta.AssignmentOperator.EQ,
-                new meta.MemberExpression($dest, $destinationPropertyKey),
-                new meta.CallExpression(
-                    new meta.MemberExpression($ctx, new meta.LiteralNumber(constructedFunctionContext.length - 1)),
-                    [new meta.MemberExpression($plainObject, $sourcePropertyKey)]
-                )
-            );
+            var node = $ctx.member(new meta.LiteralNumber(constructedFunctionContext.length - 1)).call($plainObject.member($sourcePropertyKey));
         } else {
-            var node = new meta.AssignmentExpression(
-                meta.AssignmentOperator.EQ,
-                new meta.MemberExpression($dest, $destinationPropertyKey),
-                new meta.MemberExpression($plainObject, $sourcePropertyKey)
-            );
+            var node = $plainObject.member($sourcePropertyKey);
         }
-        statements.push(new meta.ExpressionStatement(node));
+        statements.push(new meta.ExpressionStatement($dest.member($destinationPropertyKey).assign(node)));
     });
     statements.push(new meta.ReturnStatement($dest));
     var func = new meta.Function(null, [$dest, $plainObject], new meta.BlockStatement(statements));

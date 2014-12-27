@@ -5,6 +5,23 @@ export class BaseNode {
 }
 
 export class ExpressionNode extends BaseNode {
+
+    member (right: ExpressionNode) {
+        return new MemberExpression(this, right);
+    }
+
+    call (...args: ExpressionNode[]) {
+        return new CallExpression(this, args);
+    }
+
+    assign (right: ExpressionNode): AssignmentExpression;
+    assign (operator: AssignmentOperator, right: ExpressionNode): AssignmentExpression;
+    assign (operatorOrRight: any, right?: ExpressionNode) {
+        if (right) {
+            return new AssignmentExpression(operatorOrRight, this, right);
+        }
+        return new AssignmentExpression(AssignmentOperator.EQ, this, right);
+    }
 }
 
 export class StatementNode extends BaseNode {
