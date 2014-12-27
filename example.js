@@ -54,7 +54,7 @@ fromPlainObjectMapper.setMappingConfiguration(Person, {
 fromPlainObjectMapper.setMappingConfiguration(Address, {
     attributes: {
         street: 'Street',
-        zipCode: 'Zip',
+        zipCode: {name: 'Zip', converter: String},
         city: 'Town'
     }
 });
