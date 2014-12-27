@@ -1,60 +1,13 @@
 'use strict';
 
-
-var isPrototype = function (obj) {
-    return typeof obj === 'function' && obj.hasOwnProperty('prototype');
-};
-
-var orElse = function (value, orElseValue) {
-    return value == null ? orElseValue : value;
-};
-
-var identity = function (value) {
-    return value;
-};
-
-var prototypeOf = function (objectOrPrototype) {
-    if (isPrototype(objectOrPrototype)) {
-        return objectOrPrototype;
-    } else {
-        return Object.getPrototypeOf(objectOrPrototype);
-    }
-};
-
-var defaultConverter = function (dest, plainObject) {
-    Object.keys(dest).forEach(function (key) {
-        dest[key] = plainObject[key];
-    });
-};
-
 var mapperId = 0;
 
-var ObjectMapper = function () {
-    this._mapperId = ++mapperId;
-};
-
-ObjectMapper.prototype.extractConverterFromPrototype = function (prototype) {
-    var _this = this;
-    if (prototype.hasOwnProperty('$fromPlainObject' + _this._mapperId)) {
-        if (typeof prototype['$fromPlainObject' + _this._mapperId] === 'function') {
-            return prototype['$fromPlainObject' + _this._mapperId];
-        } else if (typeof prototype['$fromPlainObject' + _this._mapperId] === 'object') {
-            return function (object, plain) {
-                return _this.converterWithConfig(object, plain, prototype['$fromPlainObject' + _this._mapperId]);
-            };
-        } else {
-            throw new Error('fromPlainObject must be a function or a configuration plain object');
-        }
-    }
-    return null;
-};
-
-ObjectMapper.prototype.converterWithConfig = function (dest, plainObject, conf) {
-    var _this = this;
-    Object.keys(conf.attributes).forEach(function (key) {
-        var attributeConf = conf.attributes[key];
+var _createConverterFunctionFromConfiguration = function (configuration, map) {
+    var arrayOfConverterFunctions = [];
+    Object.keys(configuration.attributes).forEach(function (key) {
+        var attributeConf = configuration.attributes[key];
         // check if property exists from source
-        var converter = identity;
+        var converter = null;
         var type = null;
         var name = key;
         if (typeof attributeConf === 'boolean') {
@@ -64,32 +17,69 @@ ObjectMapper.prototype.converterWithConfig = function (dest, plainObject, conf) 
             }
         } else if (typeof attributeConf === 'string') {
             name = attributeConf;
-        } else if (isPrototype(attributeConf)) {
-            type = attributeConf;
         } else if (typeof attributeConf === 'function') {
-            converter = attributeConf;
+            if (attributeConf.hasOwnProperty('prototype')) {
+                type = attributeConf;
+            } else {
+                converter = attributeConf;
+            }
         } else if (typeof attributeConf === 'object') {
             var name = attributeConf.name || key;
             var type = attributeConf.type || null;
-            var converter = attributeConf.converter || identity;
+            var converter = attributeConf.converter || null;
             // warning if type AND converter are defined
         } else {
             throw new Error('Unknown type for attribute "' + key + '"" with type "' + typeof attributeConf + '"');
         }
-        dest[key] = type ? _this.map(plainObject[name], type) : converter(plainObject[name]);
+
+        if (type) {
+            arrayOfConverterFunctions.push(function convertWithPrototype (dest, plainObject) {
+                dest[key] = map(plainObject[name], type, dest[key]);
+            });
+        } else if (converter) {
+            arrayOfConverterFunctions.push(function convertWithConverter (dest, plainObject) {
+                dest[key] = converter(plainObject[name]);
+            });
+        } else {
+            arrayOfConverterFunctions.push(function convertWithName (dest, plainObject) {
+                dest[key] = plainObject[name];
+            });
+        }
     });
+    return function callListOfConvertors (dest, plainObject) {
+        for (var i = 0, length = arrayOfConverterFunctions.length; i < length; ++i) {
+            arrayOfConverterFunctions[i](dest, plainObject);
+        }
+        return dest;
+    };
 };
 
-ObjectMapper.prototype.map = function (sourceObject, destinationObjectOrPrototype, converter) {
-    var destinationObject = isPrototype(destinationObjectOrPrototype) ? new destinationObjectOrPrototype() : destinationObjectOrPrototype;
-    var prototype = prototypeOf(destinationObjectOrPrototype);
-    converter = converter || orElse(this.extractConverterFromPrototype(prototype), defaultConverter);
-    converter(destinationObject, sourceObject);
-    return destinationObject;
+var bind = function (func, ctx) {
+    return function () {
+        return func.apply(ctx, arguments);
+    };
+};
+
+var ObjectMapper = function () {
+    this._mapperId = ++mapperId;
+    this._converterFunctionNameOnPrototype = '$fromPlainObjectFunc' + this._mapperId;
+    this._boundMap = bind(this.map, this);
+};
+
+ObjectMapper.prototype._getConverterFunctionForPrototype = function (prototype) {
+    return prototype[this._converterFunctionNameOnPrototype];
+};
+
+ObjectMapper.prototype.map = function (sourceObject, prototype, instance) {
+    return this._getConverterFunctionForPrototype(prototype)(instance || new prototype(), sourceObject);
 };
 
 ObjectMapper.prototype.setMappingConfiguration = function (prototype, configuration) {
-    prototype['$fromPlainObject' + this._mapperId] = configuration;
+    prototype[this._converterFunctionNameOnPrototype] = _createConverterFunctionFromConfiguration(configuration, this._boundMap);
 };
 
-module.exports = ObjectMapper;
+if (typeof module === 'object') {
+    module.exports = ObjectMapper;
+} else if (window) {
+    window.ObjectMapper = ObjectMapper;
+}

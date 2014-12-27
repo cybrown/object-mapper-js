@@ -1,6 +1,10 @@
 'use strict';
 
-var ObjectMapper = require('./index');
+var require;
+
+if (typeof require === 'function') {
+    var ObjectMapper = require('./index');
+}
 
 var Address = function () {
     this.street = '';
@@ -62,3 +66,33 @@ var toto = fromPlainObjectMapper.map(totoDto, Person);
 console.log(toto.fullname);
 console.log('<' + typeof toto.age + '> ' + toto.age);
 console.log(toto.address.toPrettyString);
+console.log(toto.address.foo);
+
+
+console.log('');
+
+var toto2 = new Person();
+toto2.address = new Address();
+toto2.address.foo = 'bar';
+fromPlainObjectMapper.map(totoDto, Person, toto2);
+
+console.log(toto2.fullname);
+console.log('<' + typeof toto2.age + '> ' + toto2.age);
+console.log(toto2.address.toPrettyString);
+console.log(toto2.address.foo);
+
+console.log('');
+
+var a = Date.now();
+for (var i = 0; i < 100000; i++) {
+    fromPlainObjectMapper.map(totoDto, Person);
+}
+var b = Date.now();
+console.log(b - a + 'ms');
+
+var a = Date.now();
+for (var i = 0; i < 100000; i++) {
+    fromPlainObjectMapper.map(totoDto, Person, new Person());
+}
+var b = Date.now();
+console.log(b - a + 'ms');
