@@ -20,7 +20,7 @@ export class ExpressionNode extends BaseNode {
         if (right) {
             return new AssignmentExpression(operatorOrRight, this, right);
         }
-        return new AssignmentExpression(AssignmentOperator.EQ, this, right);
+        return new AssignmentExpression(AssignmentOperator.EQ, this, operatorOrRight);
     }
 }
 
