@@ -6,31 +6,19 @@ var _iterateConfigurationAttributes = function (configuration, onAttribute) {
     Object.keys(configuration.attributes).forEach(function (destinationPropertyKey) {
         var attributeConf = configuration.attributes[destinationPropertyKey];
         // check if property exists from source
-        var converter = null;
-        var type = null;
-        var sourcePropertyKey = destinationPropertyKey;
         if (typeof attributeConf === 'boolean') {
             // warning on default behaviour
-            if (!attributeConf) {
-                return;
+            if (attributeConf) {
+                onAttribute(destinationPropertyKey, destinationPropertyKey, null, null);
             }
         } else if (typeof attributeConf === 'string') {
-            sourcePropertyKey = attributeConf;
-        } else if (typeof attributeConf === 'function') {
-            if (attributeConf.hasOwnProperty('prototype')) {
-                type = attributeConf;
-            } else {
-                converter = attributeConf;
-            }
+            onAttribute(destinationPropertyKey, attributeConf, null, null);
         } else if (typeof attributeConf === 'object') {
-            var sourcePropertyKey = attributeConf.name || destinationPropertyKey;
-            var type = attributeConf.type || null;
-            var converter = attributeConf.converter || null;
+            onAttribute(destinationPropertyKey, attributeConf.name || destinationPropertyKey, attributeConf.type, attributeConf.converter);
             // warning if type AND converter are defined
         } else {
             throw new Error('Unknown type for attribute "' + destinationPropertyKey + '"" with type "' + typeof attributeConf + '"');
         }
-        onAttribute(destinationPropertyKey, sourcePropertyKey, type, converter);
     });
 };
 
