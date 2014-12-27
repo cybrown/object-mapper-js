@@ -1,7 +1,5 @@
 'use strict';
 
-var require;
-
 if (typeof require === 'function') {
     var ObjectMapper = require('./index');
 }
@@ -109,7 +107,7 @@ fromPlainObjectMapper.setMappingConfigurationWithEval(Person, {
 fromPlainObjectMapper.setMappingConfigurationWithEval(Address, {
     attributes: {
         street: 'Street',
-        zipCode: 'Zip',
+        zipCode: {name: 'Zip', converter: String},
         city: 'Town'
     }
 });

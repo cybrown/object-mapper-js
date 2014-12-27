@@ -97,8 +97,8 @@ ObjectMapper.prototype.setMappingConfigurationWithEval = function (prototype, co
     prototype[this._converterFunctionNameOnPrototype] = _createConverterFunctionFromConfigurationWithEval(configuration, this._boundMap);
 };
 
-if (typeof module === 'object') {
-    module.exports = ObjectMapper;
-} else if (window) {
+if (typeof window === 'object') {
     window.ObjectMapper = ObjectMapper;
+} else {
+    module.exports = ObjectMapper;
 }
