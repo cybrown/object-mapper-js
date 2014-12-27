@@ -42,20 +42,20 @@ var totoDto = {
 
 var fromPlainObjectMapper = new ObjectMapper();
 
+fromPlainObjectMapper.setMappingConfiguration(Address, {
+    attributes: {
+        street: 'Street',
+        zipCode: {name: 'Zip', converter: String},
+        city: 'Town'
+    }
+});
+
 fromPlainObjectMapper.setMappingConfiguration(Person, {
     attributes: {
         firstname: true,
         lastname: {name: 'last_name'},
         age: {name: 'Age', converter: Number},
         address: {name: 'Address', type: Address}
-    }
-});
-
-fromPlainObjectMapper.setMappingConfiguration(Address, {
-    attributes: {
-        street: 'Street',
-        zipCode: {name: 'Zip', converter: String},
-        city: 'Town'
     }
 });
 
@@ -95,20 +95,20 @@ for (var i = 0; i < 100000; i++) {
 var b = Date.now();
 console.log(b - a + 'ms');
 
+fromPlainObjectMapper.setMappingConfigurationWithEval(Address, {
+    attributes: {
+        street: 'Street',
+        zipCode: {name: 'Zip', converter: String},
+        city: 'Town'
+    }
+});
+
 fromPlainObjectMapper.setMappingConfigurationWithEval(Person, {
     attributes: {
         firstname: true,
         lastname: {name: 'last_name'},
         age: {name: 'Age', converter: Number},
         address: {name: 'Address', type: Address}
-    }
-});
-
-fromPlainObjectMapper.setMappingConfigurationWithEval(Address, {
-    attributes: {
-        street: 'Street',
-        zipCode: {name: 'Zip', converter: String},
-        city: 'Town'
     }
 });
 

@@ -14,6 +14,14 @@ export class ExpressionNode extends BaseNode {
         return new CallExpression(this, args);
     }
 
+    binary (operator: string, right: ExpressionNode) {
+        return new BinaryExpression(operator, this, right);
+    }
+
+    parenthesis () {
+        return new ParenthesisExpression(this);
+    }
+
     assign (right: ExpressionNode): AssignmentExpression;
     assign (operator: AssignmentOperator, right: ExpressionNode): AssignmentExpression;
     assign (operatorOrRight: any, right?: ExpressionNode) {
@@ -75,6 +83,39 @@ export class AssignmentExpression extends ExpressionNode {
 
     output () {
         return this.left.output() + outputAssignmentOperator(this.operator) + this.right.output();
+    }
+}
+
+export class BinaryExpression extends ExpressionNode {
+
+    constructor (private operator: string, private left: ExpressionNode, private right: ExpressionNode) {
+        super();
+    }
+
+    output () {
+        return this.left.output() + this.operator + this.right.output();
+    }
+}
+
+export class NewExpression extends ExpressionNode {
+
+    constructor (private callee: ExpressionNode, private arguments: ExpressionNode[] = []) {
+        super();
+    }
+
+    output () {
+        return 'new ' + this.callee.output() + '(' + this.arguments.map(arg => arg.output()).join(', ') + ')';
+    }
+}
+
+export class ParenthesisExpression extends ExpressionNode {
+
+    constructor (private expression: ExpressionNode) {
+        super();
+    }
+
+    output () {
+        return '(' + this.expression.output() + ')';
     }
 }
 
