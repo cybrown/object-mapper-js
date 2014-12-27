@@ -1,3 +1,6 @@
+require('blanket')({pattern: function (filename) {
+    return !/node_modules/.test(filename);
+}});
 var assert = require('assert');
 var ObjectMapper = require('../index');
 
