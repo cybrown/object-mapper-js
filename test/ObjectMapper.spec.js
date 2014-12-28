@@ -152,5 +152,71 @@ describe ('ObjectMapper', function () {
             assert.ok(toto.products[0] instanceof Product);
             assert.equal('keyboard', toto.products[0].name);
         });
+
+        it ('should map arrays in arrays', function () {
+            var Customer = function () {
+                this.name = '';
+                this.products = [];
+            };
+            var Product = function () {
+                this.name = '';
+                this.price = 0;
+                this.vendors = [];
+            };
+            var Vendor = function () {
+                this.id = '';
+                this.location = '';
+            };
+            mapper.setMappingConfiguration(Vendor, {
+                attributes: {
+                    id: '_id',
+                    location: 'City'
+                }
+            });
+            mapper.setMappingConfiguration(Product, {
+                attributes: {
+                    name: true,
+                    price: true,
+                    vendors: {type: [Vendor]}
+                }
+            });
+            mapper.setMappingConfiguration(Customer, {
+                attributes: {
+                    name: 'Name',
+                    products: {type: [Product]}
+                }
+            });
+            var toto = mapper.map({
+                Name: 'toto',
+                products: [
+                    {
+                        name: 'keyboard',
+                        price: 13.7,
+                        vendors: [
+                            {
+                                _id: 'vendor-france',
+                                City: 'Paris'
+                            },
+                            {
+                                _id: 'vendor-england',
+                                City: 'London'
+                            }
+                        ]
+                    },
+                    {
+                        name: 'screen',
+                        price: 199.90,
+                        vendors: []
+                    }
+                ]
+            }, Customer);
+            assert.equal('toto', toto.name);
+            assert.ok(toto instanceof Customer);
+            assert.equal(2, toto.products.length);
+            assert.ok(toto.products[0] instanceof Product);
+            assert.equal('keyboard', toto.products[0].name);
+            assert.ok(toto.products[0].vendors[0] instanceof Vendor);
+            assert.equal('London', toto.products[0].vendors[1].location);
+        });
     });
 });

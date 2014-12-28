@@ -1,6 +1,6 @@
 import meta = require('./meta');
 
-var mapperId = 0;
+var generatedId = 0;
 
 var _iterateConfigurationAttributes = function (configuration, onAttribute) {
     Object.keys(configuration.attributes).forEach(function (destinationPropertyKey) {
@@ -26,8 +26,6 @@ var $dest = new meta.Identifier('dest');
 var $ctx = new meta.Identifier('ctx');
 var $map = new meta.Identifier('map');
 var $plainObject = new meta.Identifier('plainObject');
-var $i = new meta.Identifier('i');
-var $max = new meta.Identifier('max');
 var $length = new meta.Identifier('length');
 
 var _createTransformWithConverter = function (destination, source, constructedFunctionContext, converter) {
@@ -57,7 +55,9 @@ var _createTransformWithType = function (destination, source, constructedFunctio
 
 var _createTransformWithArrayType = function (destination, source, constructedFunctionContext, type, getConverterFunctionForPrototype) {
     constructedFunctionContext.push(type);
-    var $tmp = new meta.Identifier('tmp');
+    var $tmp = new meta.Identifier('tmp_' + String(++generatedId));
+    var $i = new meta.Identifier('i_' + String(++generatedId));
+    var $max = new meta.Identifier('max_' + String(++generatedId));
     var nodes = [
         new meta.VariableDeclaration([{
             name: $tmp,
@@ -123,7 +123,7 @@ var bind = function (func, ctx) {
 };
 
 var ObjectMapper = function () {
-    this._mapperId = ++mapperId;
+    this._mapperId = ++generatedId;
     this._converterFunctionNameOnPrototype = '$fromPlainObjectFunc' + this._mapperId;
     this._boundMap = bind(this.map, this);
     this._boundGetConverterFunctionForPrototype = this._getConverterFunctionForPrototype.bind(this);
