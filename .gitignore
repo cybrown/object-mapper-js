@@ -1,4 +1,5 @@
 /node_modules
-/meta.js
+/lib
+/dist
 object-mapper-browser*
 /coverage.html

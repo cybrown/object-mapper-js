@@ -6,12 +6,12 @@
   "scripts": {
     "test": "mocha",
     "build": "npm run typescript && npm run browserify && npm run uglify",
-    "typescript": "tsc meta.ts --module commonjs --noImplicitAny",
-    "browserify": "browserify index.js > object-mapper-browser.js",
-    "clean": "rimraf meta.js && rimraf object-mapper-browser.js && rimraf coverage.html",
-    "uglify": "uglify -s object-mapper-browser.js -o object-mapper-browser.min.js",
+    "typescript": "tsc ./src/meta.ts ./src/object-mapper.ts --outdir ./lib/ --module commonjs -t ES5",
+    "browserify": "browserify --s ObjectMapper index.js > ./dist/object-mapper-browser.js",
+    "clean": "rimraf ./lib && rimraf ./dist && rimraf coverage.html",
+    "uglify": "uglify -s ./dist/object-mapper-browser.js -o ./dist/object-mapper-browser.min.js",
     "coverage": "mocha -R html-cov > coverage.html",
-    "prebuild": "npm run clean",
+    "prebuild": "npm run clean && mkdir dist",
     "pretest": "npm run build",
     "precoverage": "npm run pretest"
   },
