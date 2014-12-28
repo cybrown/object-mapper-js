@@ -1,5 +1,5 @@
 export class BaseNode {
-    output () {
+    output (): string {
         throw new Error('Not implemented');
     }
 }
@@ -8,6 +8,10 @@ export class ExpressionNode extends BaseNode {
 
     member (right: ExpressionNode) {
         return new MemberExpression(this, right);
+    }
+
+    index (right: ExpressionNode) {
+        return new MemberExpression(this, right, true);
     }
 
     call (...args: ExpressionNode[]) {
@@ -66,12 +70,12 @@ export class LiteralNumber extends ExpressionNode {
 
 export class MemberExpression extends ExpressionNode {
 
-    constructor (private obj: ExpressionNode, private prop: ExpressionNode) {
+    constructor (private obj: ExpressionNode, private prop: ExpressionNode, private forceIndex: boolean = false) {
         super();
     }
 
     output () {
-        if (this.prop instanceof Identifier) {
+        if (!this.forceIndex && this.prop instanceof Identifier) {
             return this.obj.output() + '.' + this.prop.output();
         } else {
             return this.obj.output() + '[' + this.prop.output() + ']';
@@ -157,6 +161,58 @@ export class ReturnStatement extends StatementNode {
 
     output () {
         return 'return ' + this.argument.output() + ';'
+    }
+}
+
+export class ForStatement extends StatementNode {
+
+    constructor (private init: StatementNode, private test: ExpressionNode, private update: ExpressionNode, private body: StatementNode) {
+        super();
+    }
+
+    output (): string {
+        return 'for (' + this.init.output() + this.test.output() + ';' + this.update.output() + ')' + this.body.output();
+    }
+}
+
+export class VariableDeclaration extends StatementNode {
+
+    constructor(private declarations: OneVariableDeclaration[]) {
+        super();
+    }
+
+    output () {
+        return 'var ' + this.declarations.map(this._outputOneDeclaration).join(',') + ';';
+    }
+
+    private _outputOneDeclaration (declaration: OneVariableDeclaration): string {
+        var result = declaration.name.output();
+        if (declaration.init) {
+            result += '=' + declaration.init.output();
+        }
+        return result;
+    }
+};
+
+export interface OneVariableDeclaration {
+    name: Identifier;
+    init: ExpressionNode;
+}
+
+export class UnaryExpression extends ExpressionNode {
+
+    constructor (private operator: string, private prefix: boolean, private argument: ExpressionNode) {
+        super();
+    }
+
+    output () {
+        var result: string = this.argument.output();
+        if (this.prefix) {
+            result = this.operator + result;
+        } else {
+            result += this.operator;
+        }
+        return result;
     }
 }
 

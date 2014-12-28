@@ -109,4 +109,48 @@ describe ('ObjectMapper', function () {
             assert.equal('great street', john.address.street);
         });
     });
+
+    describe ('Objects with arrays as properties', function () {
+
+        it ('should map multiple objects in an array', function () {
+            var Customer = function () {
+                this.name = '';
+                this.products = [];
+            };
+            var Product = function () {
+                this.name = '';
+                this.price = 0;
+            };
+            mapper.setMappingConfiguration(Product, {
+                attributes: {
+                    name: true,
+                    price: true
+                }
+            });
+            mapper.setMappingConfiguration(Customer, {
+                attributes: {
+                    name: 'Name',
+                    products: {type: [Product]}
+                }
+            });
+            var toto = mapper.map({
+                Name: 'toto',
+                products: [
+                    {
+                        name: 'keyboard',
+                        price: 13.7
+                    },
+                    {
+                        name: 'screen',
+                        price: 199.90
+                    }
+                ]
+            }, Customer);
+            assert.equal('toto', toto.name);
+            assert.ok(toto instanceof Customer);
+            assert.equal(2, toto.products.length);
+            assert.ok(toto.products[0] instanceof Product);
+            assert.equal('keyboard', toto.products[0].name);
+        });
+    });
 });
